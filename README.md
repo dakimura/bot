@@ -129,32 +129,48 @@ and confirm your e-mail address after the registration.
 
 ### Create a workspace in Terraform Cloud
 Create a workspace by following the steps at: https://www.terraform.io/cloud-docs/workspaces/creating#create-a-workspace.
-Set the service account you created as a variable in Terraform Cloud.
+
+Workspaces -> "+ New Workspace" -> "Version Control Workflow" -> "GitHub" -> Enter your github repository (e.g. "dakimura/bot")
 
 ### Connect Terraform to your Github repository
 //TODO:
 
-### Register Service account key to Terraform Cloud
+### Register GCP Project ID & Service account key to Terraform Cloud as Environmental Variables
 After creating a workspace, we register the downloaded GCP service account key to Terraform cloud.
+Go to the workspace you created.
+![](img/workspaces.png)
 
+Click "Varibale" from the left pane, Choose "Add Variable", and check "Environmental Variable".
 
 ![](img/reg_env_var_tf_cloud.png)
+Key="GOOGLE_CREDENTIALS", Value=the content of the service account file you created.
 Environmental Variable does not accept new lines, so remove the value by the following command and copy-paste.
 (If)
 ```bash
 $ brew install jq
 $ jq -c < /Users/dakimura/Desktop/sa-trade-bot-private-key.json
 ```
-Please check on `Sensitive`, and save the variable.
+Please check on `Sensitive`, and save the variable. Otherwise, the service account key value will be visible 
+to other users who can see your workspace.
+
+In the same way, add Key="PROJECT_ID", Value="
+
+Click "Save Variable".
+
+![](img/variables.png)
+Now you should have 2 environmental variables.
+
+### apply
+
 
 
 ## FAQ
 
 ### What are Terraform and Terraform cloud, and why are they necessary?
 
-Terraform is an open-source infrastructure as code(IaaC) software tool that
+Terraform is an open-source infrastructure as code(IaC) software tool that
 enables you to safely and predictably create, change, and improve infrastructure.
-Here we are going to create a server for the bot, but probably you don't want to care about:
+Here we are going to build a server for the bot, but probably you don't want to care about:
 - Does the server cost a lot?
 - Is the server opening a proper port?
 - Can I delete the server when I want to?
@@ -194,11 +210,7 @@ Terraform v1.3.1
 on darwin_arm64
 ```
 
-## Create a server using Terraform Cloud
-
-
-
-## run a bot on your server
+## run the bot application
 ```bash
 streamlit run /Users/dakimura/projects/src/github.com/dakimura/bot/bot.py
 ```
