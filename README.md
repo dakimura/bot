@@ -1,83 +1,190 @@
-# bot用サーバの構築
+# Simple Bot environment
 
-自動トレードを行うbotを運用するには、運用者がいちいち起動や終了をしなくとも自動的にbotが動き続ける仕組みを用意する必要があります。
-インフラやネットワークが専門でない方にとってはここが高いハードルとなり、複雑なアルゴリズムを学んでもそれを実運用に持っていくことが難しいと感じるケースがあると思います。
+In order to operate an automated trading bot, it is necessary to prepare a mechanism that 
+allows the bot to automatically run without the operator having to start and stop it manually.
+This is a high hurdle for those who are not experts in infrastructure or networking. 
+Even if they know complex machine-learning algorithms, they may find it difficult to put them into actual operation.
 
-本リポジトリでは、10年サーバ開発・運用を行っている立場としてなるべくシンプルでおすすめのbot運用環境の構築方法を説明します。
-いくつか専門用語がわからなくとも、手順に従って作業をすすめることで誰でもbot運用が開始できることを目指します。
+In this repository, We will explain how to build a simple environment for running a bot.
+Even if you do not understand some network/infrastructure/cloud computing terms,
+we aim for you to be able to start bot operation by following the steps.
 
-データベース、ログ収集、サーバがダウンしたときにアラートを送る仕組み、CD/CI等、本格的なサービスを運用するにはこれだけでは足りないことは重々承知です。
-しかし個人がbot運用の第一歩を踏み出すにあたって、こちらの手順が参考になれば幸いです。
+Of course, we are aware that this is not enough to operate a full-fledged, production-scale service.
+Databases, log collection, a mechanism to send alerts when the server is down, CD/CI, and so on would be necessary.
+However, we hope this procedure will be helpful for those who are taking their first steps in automatic trading.
 
-# 本リポジトリで作るサーバ環境
+# Server environment created by this repository
 
 ![](img/system_arch.png)
 https://docs.google.com/presentation/d/1SyGSNEX8N3V8m4CkujqgTyiVN-Eeu1zUN4UCOVIs5Ss/edit?usp=sharing
 
-## Github上にbot用のリポジトリを作成する
+## Create a Github repository for the bot
 
-botアプリやサーバ構成のコードを保存し、後の手順でTerraform Cloudとの連携を容易に行うために、
-[Github](https://github.com/) リポジトリを作成します。私は bot というシンプルな名前でこのリポジトリを作ってみました。
-このリポジトリをforkして使用していただいても構いません。
-botのコードを公開したくない場合は、プライベートなリポジトリとして作成しても構いません。
+To store the code for the bot and network/infra configuration,
+a [Github](https://github.com/) repository is needed.
+I created dakimura/bot repository.
+You can start from forking the repo.
+If you don't want to make the repository public, 
+you can create an empty repository and copy-paste the contents of this repository.
 
-## Google Cloud Platformに登録(Sign Up)する
+## Sign up for Google Cloud Platform
 
-botを永続的に動かすには、botプログラムを動作させる(デプロイする)サーバが必要です。
-もちろん他のレンタルサーバや、AWS, Azureのようなクラウドサービスでも構わないのですが、ここではGoogle Cloud Platform (GCP) を使用します。
-GCPは2022年10月現在、毎月上限額までずっと無料で使える無料枠があり、 e2-microという小さなサイズのインスタンスであればずっと無料で動かし続けることができます。
-他のサービスにも無料枠はありますが、ずっと無料枠が維持されるのは現在GCPだけです。
+To run the bot for 24/7, you need a server on which to run (deploy) the bot program.
+Here we will use Google Cloud Platform (GCP). Of course, other rental servers or cloud services such as AWS and Azure are acceptable, 
+but As of October 2022, GCP has a free tier that allows you to keep running a small(e2-micro) instance for free for as long as you want,
+up to the maximum amount each month. Other services also offer free allowances, 
+but AFAIK GCP is the only one that keeps the free allowance for a long time.
 
-https://www.google.com/cloud からGoogle Cloud Platformに登録します。
+Sign up for Google Cloud Platform from [here](https://www.google.com/cloud)
 
-### Google Cloud Platformにプロジェクトを作成する
+### Create a project on Google Cloud Platform
 
-インスタンスなどのサーバリソースを作るには、Google Cloud Platform内にまず「プロジェクト」を作る必要があります。
-Google Cloud コンソール https://cloud.google.com › cloud-console を開いてサインインし、
-新しいプロジェクトを作成します。 ここでは私は `trade-bot` という名前でプロジェクトを作成しました。
+To create a server resource such as an Google Compute Engine instance, 
+you must first create a "project" on Google Cloud Platform.
+Open the Google Cloud console https://cloud.google.com' > cloud-console,
+sign in and Create a new project. I have created a project named `trade-bot`.
 
-### Google Cloud SDKをインストールする
+### install gcloud (Google Cloud SDK command line interface)
 
 https://cloud.google.com/sdk/docs/install
-を参考に、`gcloud` コマンドがターミナルから使用できるようにしましょう。
+Make sure the `gcloud` command is available from the terminal.
 
-### Google Cloudにログインし、サービスアカウントを作成する
+### Sign in Google Cloud and create a service account
+A service account is a special type of Google account intended to represent 
+a non-human user that needs to authenticate and be authorized to access data in Google APIs.
 
-あなたのGoogle Cloud Platformアカウント上にTerraformを使ってサーバを自動的に構築するには、
-Terraformに認証情報を渡す必要があります。Google Cloud Platform上では、
-権限を付与したサービスアカウントという情報を用いてそれを実現することができます。
+In the steps that follow, we will build our server on the Google Cloud Platform using a service called Terraform.
+To automatically build a server using Terraform on your Google Cloud Platform account, 
+ you need to pass the service account information to Terraform.
 
-`gcloud auth application-default login` コマンドを使って、まずgcloudコマンドが正しくインストールされているか確かめましょう。
-Googleアカウントにログインした後、[Cloud SDK 認証の完了](https://cloud.google.com/sdk/auth_success) という画面がブラウザ上に表示されたら成功です。
+Let's use the `gcloud auth login` command to first make sure that the gcloud command is properly installed.
+After logging in to your Google account, You have succeeded if the screen [You are now authenticated with the gcloud CLI!](https://cloud.google.com/sdk/auth_success) appears in your browser.
 
-https://blog.blackcoffy.net/posts/create-service-accounts-on-gcloud-iam を参考に、サービスアカウントを作成しましょう。
+Let's create a service account by referring to https://cloud.google.com/iam/docs/creating-managing-service-accounts.
 
+Confirm the GCP project you created and set the project. 
+Please replace the project name(trade-bot-123456) below with your own,
 ```bash
-gcloud iam service-accounts create trade-bot \
---description="システムトレード用のServiceAccount" \
---display-name="trade-bot"
+ $ gcloud projects list
+PROJECT_ID              NAME                  PROJECT_NUMBER
+trade-bot-123456        trade-bot             123456789012
+
+$ gcloud config set project trade-bot-123456
+Updated property [core/project].
 ```
 
-## Terraform Cloudに登録(Sign Up)する
+and create a service account.
+```bash
+$ gcloud iam service-accounts create trade-bot \
+--description="ServiceAccount for my trading bot" \
+--display-name="trade-bot"
 
-サーバの構築などを自動的に管理してもらうために、Terraform Cloudを使用します。アカウント登録が必要です。
-https://app.terraform.io/public/signup/account
+Created service account [trade-bot].
+```
 
-アカウントを登録し、メールアドレスの確認などを完了させます。
+Grant the `roles/owner` role (privilege) to the service account.
+This is a very strong permission, so please be very careful when handling the service account.
 
-### どうしてStreamlit Cloudをデプロイ先として使わないのか
+```bash
+gcloud projects add-iam-policy-binding trade-bot-123456 \
+--member="serviceAccount:trade-bot@trade-bot-123456.iam.gserviceaccount.com" \
+--role=roles/owner
+
+Updated IAM policy for project [trade-bot-123456].
+bindings:
+- members:
+  - serviceAccount:trade-bot@trade-bot-123456.iam.gserviceaccount.com
+  - user:example@example.com
+  role: roles/owner
+etag: XXXXXXXXXXXX
+version: 1
+```
+
+To pass the service account information, create a key and download it to your localhost.
+https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-service-account-keys-create-gcloud
+
+(Please replace the local file path, service account name, and project ID to your own)
+```bash
+$ gcloud iam service-accounts keys create /Users/dakimura/Desktop/sa-trade-bot-private-key.json \
+    --iam-account=trade-bot@trade-bot-123456.iam.gserviceaccount.com
+    
+created key [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] of type [json] as [/Users/dakimura/Desktop/sa-trade-bot-private-key.json] for [trade-bot@trade-bot-123456.iam.gserviceaccount.com]
+```
+DO NOT share the downloaded private key file with anyone.
+
+Once again, because it's important.
+
+DO NOT share the downloaded private key file with anyone.
+
+Also, you cannot download the private key file again. If you accidentally lose the file or share the file with someone,
+please immediately delete it by the following command:
+```bash
+gcloud iam service-accounts keys delete /Users/dakimura/Desktop/sa-trade-bot-private-key.json --iam-account=trade-bot@trade-bot-123456.iam.gserviceaccount.com
+```
+
+## Sign up for Terraform Cloud
+To configure the bot server automatically, we use Terraform Cloud.
+Please register an account with [Terraform Cloud](https://app.terraform.io/public/signup/account).
+and confirm your e-mail address after the registration.
+
+### Create a workspace in Terraform Cloud
+Create a workspace by following the steps at: https://www.terraform.io/cloud-docs/workspaces/creating#create-a-workspace.
+Set the service account you created as a variable in Terraform Cloud.
+
+### Connect Terraform to your Github repository
+//TODO:
+
+### Register Service account key to Terraform Cloud
+After creating a workspace, we register the downloaded GCP service account key to Terraform cloud.
+
+
+![](img/reg_env_var_tf_cloud.png)
+Environmental Variable does not accept new lines, so remove the value by the following command and copy-paste.
+(If)
+```bash
+$ brew install jq
+$ jq -c < /Users/dakimura/Desktop/sa-trade-bot-private-key.json
+```
+Please check on `Sensitive`, and save the variable.
+
+
+## FAQ
+
+### What are Terraform and Terraform cloud, and why are they necessary?
+
+Terraform is an open-source infrastructure as code(IaaC) software tool that
+enables you to safely and predictably create, change, and improve infrastructure.
+Here we are going to create a server for the bot, but probably you don't want to care about:
+- Does the server cost a lot?
+- Is the server opening a proper port?
+- Can I delete the server when I want to?
+
+You don't have to worry because all those kind of settings are stored in the text files (.tf files) on this repository.
+You can reproduce the infrastructure anytime without learning much about Google Cloud.
+
+In short, Terraform will manage the state of your server and network settings.
+To store the state, Terraform needs to be integrated with your Github repository and GCP account.
+Terraform Cloud does it, and you don't have to care where the Terraform commands are run.
+
+As of October 2022, Terraform Cloud is free to use for up to 5 users with unlimited number of workspaces. 
+https://www.hashicorp.com/products/terraform/pricing
+
+Of course, you can build a server and network infrastructure at GCP console(=Web UI), 
+so Terraform is not a must if you know how to do it.
+
+### Your python code uses Streamlit. Why don't you use Streamlit Cloud?
 
 https://discuss.streamlit.io/t/does-streamlit-has-a-maximum-run-time-for-functions/22452/3
-Streamlitはダッシュボード機能のようなwebアプリを対象にしており、処理のタイムアウトも起きる。
-そのため、ユーザから何のアクションが無くとも永続的にデータを取得し、トレードを行うようなbotの用途には向かないと判断しました。
+Streamlit is intended for web applications such as dashboard feature, and it has processing timeouts.
+So we determined that it is not suitable for bot applications that persistently retrieve data and make trades without any action from the user.
 
-### Terraformをインストールする
+### Install Terraform command line interface
 
-https://app.terraform.io/app/getting-started から Try an example configurationを選択し、
-内容に従ってTerraformコマンドをインストールします。
+Choose "Try an example configuration" at https://app.terraform.io/app/getting-started
+and install Terraform command by following the instruction.
 https://app.terraform.io/app/getting-started/example
 
-私の場合はmacを使っているので、下記2コマンドを使用してインストールしました。
+I'm using mac, so installed it by the following 2 commands:
 ```bash
 $ brew tap hashicorp/tap
 $ brew install hashicorp/tap/terraform
@@ -87,39 +194,38 @@ Terraform v1.3.1
 on darwin_arm64
 ```
 
-## Terraform Cloudを使用してインスタンスを生成する
+## Create a server using Terraform Cloud
 
-### Terraform Cloud内にワークスペースを作成する
 
-こちらの作業に関しては
-https://www.niandc.co.jp/sol/tech/date20191002_1814.php
-のページが参考になります。
-サービスアカウントの作成とその環境変数への設定も必要になります。
 
-## サーバ内でボットを動かす
+## run a bot on your server
 ```bash
 streamlit run /Users/dakimura/projects/src/github.com/dakimura/bot/bot.py
 ```
 
-デーモン(≒バックグラウンドで動き続ける)ようにしたいですし、最低限のログは見たい。
-ポートは443番を使いたい…etcを考えると、 以下のようなコマンドを使うとよいでしょう。
-
-### systemctlのサービスとして登録しないのですか？
-分かる方はもちろん書いてもいいです。ここでは
-
-
+Probably you want to run it as a daemon(=a kind of background process)
+and use 443 port, so you would use the following command to start the bot:
 ```bash
 ```
 
-### Dockerは使わないのですか？
-もちろん使ってよいです！Google Container RegistryへのDockerイメージの登録やサーバインスタンス側でのDocker pull設定など
-面倒な作業も増えるので、それはまた次のステップと考え、ここでは
-小さなインスタンス([e2-micro](https://cloud.google.com/compute/vm-instance-pricing?hl=ja#e2_sharedcore_machine_types))を使用しているので
-Dockerにリソースを取られるのももったいないという考えもあります。
+### Don't we use Docker?
+Actually, we should use Docker.
+But it's time-consuming and difficult to register the docker image to Google Container Registry and 
+configure the permission to pull the image from the GCE instance, so we think it as a nice-to-have but not must-have thing.
 
-### 作ったサーバにSSHしたいのですが
+Also, because we are using a tiny([e2-micro](https://cloud.google.com/compute/vm-instance-pricing?hl=ja#e2_sharedcore_machine_types)) instance,
+so we should not use much resource to the Docker daemon.
 
-`gcloud compute --project "trade-bot" ssh --zone "us-central1" "trade-bot"`
-こちらのコマンドでサーバにSSHできるはずです。
-もちろん分かる方はSSH鍵ペアを作って `.ssh/authorized_keys` に公開鍵を登録してSSH用のポートを開放して...という手順をとっても構いません。
+### Don't we register the bot as a systemctl service?
+For simplicity, we didn't explain how to do it.
+You can do so if you know how to do it.
+
+
+### How can I SSH to the server?
+
+You can SSH-login to the server by using the following command:
+(Replace the project name and instance name with your own.)
+```bash
+gcloud compute --project "trade-bot-123456" ssh --zone "us-central1" "trade-bot"
+```
 

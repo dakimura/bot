@@ -1,10 +1,9 @@
-# GCPのGoogle Compute Engine無料枠は2022年10月現在
-# オレゴン(us-west1), アイオワ(us-central1), サウスカロライナ(us-east1)
-# におけるe2-microインスタンスのみが対象です。
+# As of October 2022, only e2-micro instances in Oregon (us-west1), Iowa (us-central1),
+# and South Carolina (us-east1) are eligible for the Google Cloud Platform's free tier.
 # ref: https://cloud.google.com/free/docs/free-cloud-features?hl=ja#compute
 #
-# 無料枠を使用したい方は、近いロケーションにサーバを設置したいからといって
-# regionやzoneをasia-northeast1に変更しないでください。
+# If you want to build the server for free, please do not change region or zone
+# to another value (e.g. asia-northeast1).
 provider "google" {
   project = "trade-bot"
   region  = "us-central1"
