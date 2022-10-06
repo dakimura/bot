@@ -1,5 +1,9 @@
-variable "GOOGLE_CREDENTIALS" {}
-variable "PROJECT_ID" {}
+variable "GOOGLE_CREDENTIALS" {
+  type = string
+}
+variable "PROJECT_ID" {
+  type = string
+}
 
 # As of October 2022, only e2-micro instances in Oregon (us-west1), Iowa (us-central1),
 # and South Carolina (us-east1) are eligible for the Google Cloud Platform's free tier.
