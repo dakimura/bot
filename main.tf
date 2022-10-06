@@ -10,14 +10,13 @@ variable "PROJECT_ID" {}
 provider "google" {
   credentials = var.GOOGLE_CREDENTIALS
   project     = var.PROJECT_ID
-  region      = "us-central1"
-  zone        = "us-central1-c"
+  region  = "us-central1"
+  zone    = "us-central1-c"
 }
 
-resource "google_compute_instance" "tf-cloud-01" {
-  name                      = "bot-instance"
-  machine_type              = "e2-micro"
-  allow_stopping_for_update = true
+resource "google_compute_instance" "vm_instance" {
+  name         = "bot-instance"
+  machine_type = "e2-micro"
 
   boot_disk {
     initialize_params {
@@ -28,6 +27,13 @@ resource "google_compute_instance" "tf-cloud-01" {
   }
 
   network_interface {
-    network = "default"
+    network = google_compute_network.vpc_network.self_link
+    access_config {
+    }
   }
+}
+
+resource "google_compute_network" "vpc_network" {
+  name                    = "bot-network"
+  auto_create_subnetworks = "true"
 }
