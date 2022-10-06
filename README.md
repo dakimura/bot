@@ -129,14 +129,33 @@ and confirm your e-mail address after the registration.
 
 ### Create a workspace in Terraform Cloud
 Create a workspace by following the steps at: https://www.terraform.io/cloud-docs/workspaces/creating#create-a-workspace.
+[Login to Terraform Cloud](https://app.terraform.io/app).
+When your infrastructure config is changed, it should be automatically applied to the infrastructure.
+Terraform cloud can update the infrastructure when your code on GitHub is updated.
+Let's integrate Github when creating a new workspace.
 
-Workspaces -> "+ New Workspace" -> "Version Control Workflow" -> "GitHub" -> Enter your github repository (e.g. "dakimura/bot")
+Workspaces -> "+ New Workspace" -> "Version Control Workflow" -> "Connect to a different VCS"
+-> Click the down-arrow button next to "Github" -> Click "GitHub.com(Custom)"
+-> Setup Provider by following the instruction.
 
-### Connect Terraform to your Github repository
-//TODO:
+![](img/setup_provider.png)
+
+-> Click "Connect and Continue"
+
+After successfully integrating Terraform cloud app to Github,
+You'll see the following screen:
+![](img/tf_github_integrated.png)
+
+Let's go back to the screen to create a workspace, and now you would be able to see the button with the integrated GitHub app.
+![](img/after_github_integ.png)
+Click it and choose this repository, and create a workspace.
+![](img/choose_repo.png)
+
+You would be asked to set PROJECT_ID and GOOGLE_CREDENTIALS variables but skip it for now
+and move to the next step.
 
 ### Register GCP Project ID & Service account key to Terraform Cloud as Environmental Variables
-After creating a workspace, we register the downloaded GCP service account key to Terraform cloud.
+After creating a workspace, we register the GCP Project ID and downloaded GCP service account key to Terraform cloud.
 Go to the workspace you created.
 ![](img/workspaces.png)
 
@@ -155,6 +174,7 @@ to other users who can see your workspace.
 
 In the same way, add Key="PROJECT_ID", Value=trade-bot-123456"
 (Replace the project ID with your own)
+![](img/set_variable.png)
 
 Click "Save Variable".
 
@@ -162,7 +182,7 @@ Click "Save Variable".
 Now you should have 2 environmental variables.
 
 ### Run Terraform (apply)
-Go to your workspace page -> Click "Runs" -> Click ""
+Go to your workspace page -> Click "Runs" -> Click "Actions" -> "Start new run"
 After Planning and Cost Estimation is done, click "Confirm & Apply"
 -> Click "Confirm Plan"
 ![](img/tf_confirm_apply.png)

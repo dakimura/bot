@@ -8,8 +8,8 @@ variable "PROJECT_ID" {}
 # If you want to build the server for free, please do not change region or zone
 # to another value (e.g. asia-northeast1).
 provider "google" {
-  credentials = var.GOOGLE_CREDENTIALS
-  project     = var.PROJECT_ID
+  credentials = "${var.GOOGLE_CREDENTIALS}"
+  project     = "${var.PROJECT_ID}"
   region  = "us-central1"
   zone    = "us-central1-c"
 }
@@ -25,6 +25,7 @@ resource "google_compute_instance" "vm_instance" {
       image = "debian-cloud/debian-11"
     }
   }
+
 
   network_interface {
     network = google_compute_network.vpc_network.self_link
