@@ -153,16 +153,22 @@ $ jq -c < /Users/dakimura/Desktop/sa-trade-bot-private-key.json
 Please check on `Sensitive`, and save the variable. Otherwise, the service account key value will be visible 
 to other users who can see your workspace.
 
-In the same way, add Key="PROJECT_ID", Value="
+In the same way, add Key="PROJECT_ID", Value=trade-bot-123456"
+(Replace the project ID with your own)
 
 Click "Save Variable".
 
 ![](img/variables.png)
 Now you should have 2 environmental variables.
 
-### apply
+### Run Terraform (apply)
+Go to your workspace page -> Click "Runs" -> Click ""
+After Planning and Cost Estimation is done, click "Confirm & Apply"
+-> Click "Confirm Plan"
+![](img/tf_confirm_apply.png)
 
-
+Please follow the error message if you get the following:
+![](img/apply_error.png)
 
 ## FAQ
 
