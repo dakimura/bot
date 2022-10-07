@@ -250,6 +250,9 @@ Now you are running your bot, and you can see the dashboard via the Internet.
 
 ## Continuous Delivery and Integration using Github Actions
 // TODO:
+Go to Terraform Cloud -> Workspace -> Set Terraform Variable:
+Key=REPO_NAME, Value=dakimura/bot (replace with your own repo name)
+
 
 ## FAQ
 
