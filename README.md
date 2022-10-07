@@ -194,6 +194,60 @@ Please follow the error message if you get the following:
 Once the Run is succeeded, you will see the following:
 ![](img/run_succeeded.png)
 
+### Enable Auto Apply
+It's time-consuming to manually confirm each apply, let's enable Auto Apply for Terraform Cloud.
+Go to Workspace page on Terraform Cloud -> Setting -> General 
+-> check "Auto apply" under Apply Method section.
+![](img/apply_method.png)
+Click "Save settings".
+
+## run the bot application
+Now you have a server instance.
+Let's SSH-login and run the bot.
+
+You can SSH-login to the instance by using the following command:
+(Replace the project name and instance name with your own.)
+```bash
+$ gcloud compute --project "trade-bot-123456" ssh --zone "us-central1-c" "bot-instance"
+
+Warning: Permanently added 'compute.1***5' (***) to the list of known hosts.
+Linux bot-instance ***-cloud-amd64 #1 SMP Debian 5.10.140-1 (2022-09-02) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+dakimura@bot-instance:~$ sudo -s
+root@bot-instance:/home/dakimura#
+root@bot-instance:/home/dakimura# apt install pip
+```
+For now, let's copy-paste the source files and requirements.txt, and directly run the bot.
+
+```bash
+$ pip install -r requirements.txt
+# run as a background process
+$ nohup streamlit run --server.port=80 bot.py >>bot.log 2>&1 &
+$ cat bot.log
+nohup: ignoring input
+
+Collecting usage statistics. To deactivate, set browser.gatherUsageStats to False.
+
+
+  You can now view your Streamlit app in your browser.
+
+  Network URL: http://***:80
+  External URL: http://***:80
+```
+
+You can see `External URL: http://***:80`
+at the end of the log. Let's access the URL.
+
+![](img/bot_dashboard.png)
+Congrats!
+Now you are running your bot, and you can see the dashboard via the Internet.
+
 ## FAQ
 
 ### What are Terraform and Terraform cloud, and why are they necessary?
@@ -240,19 +294,11 @@ Terraform v1.3.1
 on darwin_arm64
 ```
 
-## run the bot application
-```bash
-streamlit run /Users/dakimura/projects/src/github.com/dakimura/bot/bot.py
-```
 
-Probably you want to run it as a daemon(=a kind of background process)
-and use 443 port, so you would use the following command to start the bot:
-```bash
-```
 
 ### Don't we use Docker?
 Actually, we should use Docker.
-But it's time-consuming and difficult to register the docker image to Google Container Registry and 
+But it's time-consuming to register the docker image to Google Container Registry and 
 configure the permission to pull the image from the GCE instance, so we think it as a nice-to-have but not must-have thing.
 
 Also, because we are using a tiny([e2-micro](https://cloud.google.com/compute/vm-instance-pricing?hl=ja#e2_sharedcore_machine_types)) instance,
@@ -262,12 +308,6 @@ so we should not use much resource to the Docker daemon.
 For simplicity, we didn't explain how to do it.
 You can do so if you know how to do it.
 
-
-### How can I SSH to the server?
-
-You can SSH-login to the server by using the following command:
-(Replace the project name and instance name with your own.)
-```bash
-gcloud compute --project "trade-bot-123456" ssh --zone "us-central1-c" "bot-instance"
-```
-
+### Don't we use Workload Identity Federation for Terraform Cloud?
+Apparently Workload Identity Federation is not supported by Terraform Cloud yet.
+https://discuss.hashicorp.com/t/workload-identity-federation-to-integrate-terraform-cloud-with-gcp/40334
