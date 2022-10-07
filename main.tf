@@ -21,6 +21,7 @@ provider "google" {
 resource "google_compute_instance" "vm_instance" {
   name         = "bot-instance"
   machine_type = "e2-micro"
+  tags = ["bot-instance"]
 
   boot_disk {
     initialize_params {
@@ -30,15 +31,33 @@ resource "google_compute_instance" "vm_instance" {
     }
   }
 
-
   network_interface {
-    network = google_compute_network.vpc_network.self_link
+    network = "default"
+
     access_config {
+      // Ephemeral IP
     }
   }
 }
 
-resource "google_compute_network" "vpc_network" {
-  name                    = "bot-network"
-  auto_create_subnetworks = "true"
+#resource "google_compute_network" "vpc_network" {
+#  name                    = "bot-network"
+#  auto_create_subnetworks = "true"
+#}
+
+resource "google_compute_firewall" "default" {
+ name    = "bot-firewall"
+ network = "default"
+
+ allow {
+   protocol = "icmp"
+ }
+
+ allow {
+   protocol = "tcp"
+   ports    = ["80", "22"]
+ }
+
+ source_ranges = ["0.0.0.0/0"]
+ target_tags = ["bot-instance"]
 }

@@ -172,6 +172,7 @@ $ jq -c < /Users/dakimura/Desktop/sa-trade-bot-private-key.json
 Please check on `Sensitive`, and save the variable. Otherwise, the service account key value will be visible 
 to other users who can see your workspace.
 
+
 In the same way, add Key="PROJECT_ID", Value=trade-bot-123456"
 (Replace the project ID with your own)
 ![](img/set_variable.png)
@@ -189,6 +190,9 @@ After Planning and Cost Estimation is done, click "Confirm & Apply"
 
 Please follow the error message if you get the following:
 ![](img/apply_error.png)
+
+Once the Run is succeeded, you will see the following:
+![](img/run_succeeded.png)
 
 ## FAQ
 
@@ -264,6 +268,6 @@ You can do so if you know how to do it.
 You can SSH-login to the server by using the following command:
 (Replace the project name and instance name with your own.)
 ```bash
-gcloud compute --project "trade-bot-123456" ssh --zone "us-central1" "trade-bot"
+gcloud compute --project "trade-bot-123456" ssh --zone "us-central1-c" "bot-instance"
 ```
 
