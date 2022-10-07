@@ -61,3 +61,7 @@ resource "google_compute_firewall" "default" {
  source_ranges = ["0.0.0.0/0"]
  target_tags = ["bot-instance"]
 }
+
+resource "google_iam_workload_identity_pool" "bot" {
+  workload_identity_pool_id = "bot-pool"
+}

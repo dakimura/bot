@@ -1,4 +1,4 @@
-# Simple Bot environment
+# Bot environment setup
 
 In order to operate an automated trading bot, it is necessary to prepare a mechanism that 
 allows the bot to automatically run without the operator having to start and stop it manually.
@@ -13,7 +13,7 @@ Of course, we are aware that this is not enough to operate a full-fledged, produ
 Databases, log collection, a mechanism to send alerts when the server is down, CD/CI, and so on would be necessary.
 However, we hope this procedure will be helpful for those who are taking their first steps in automatic trading.
 
-# Server environment created by this repository
+# Environment created by this instruction
 
 ![](img/system_arch.png)
 https://docs.google.com/presentation/d/1SyGSNEX8N3V8m4CkujqgTyiVN-Eeu1zUN4UCOVIs5Ss/edit?usp=sharing
@@ -247,6 +247,9 @@ at the end of the log. Let's access the URL.
 ![](img/bot_dashboard.png)
 Congrats!
 Now you are running your bot, and you can see the dashboard via the Internet.
+
+## Continuous Delivery and Integration using Github Actions
+// TODO:
 
 ## FAQ
 
