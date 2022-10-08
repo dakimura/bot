@@ -11,6 +11,7 @@ TRADE_DATA = []
 async def main():
     # entry exit job
     def entry_job():
+        # https://alpaca.markets/docs/trading/paper-trading/
         TRADE_DATA.append([datetime.datetime.now(), random.random()])
 
     def exit_job():

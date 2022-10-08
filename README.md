@@ -190,6 +190,8 @@ After Planning and Cost Estimation is done, click "Confirm & Apply"
 
 Please follow the error message if you get the following:
 ![](img/apply_error.png)
+Go to the API dashboard for your project and search the APIs that are not enabled -> enable API
+https://console.cloud.google.com/apis/dashboard
 
 Once the Run is succeeded, you will see the following:
 ![](img/run_succeeded.png)
@@ -249,10 +251,16 @@ Congrats!
 Now you are running your bot, and you can see the dashboard via the Internet.
 
 ## Continuous Delivery and Integration using Github Actions
-// TODO:
 Go to Terraform Cloud -> Workspace -> Set Terraform Variable:
 Key=REPO_NAME, Value=dakimura/bot (replace with your own repo name)
 
+Go to the [dashboard of your GCP project](https://console.cloud.google.com/home/dashboard) and check the project name and ID.
+Copy `.github/` directory to your repository, open `main.yml`, and change the following lines to your project name and ID.
+
+```bash
+workload_identity_provider: 'projects/{YOUR PROJECT ID}/locations/global/workloadIdentityPools/gh-oidc-pool/providers/github-actions'
+service_account: 'github-actions@{YOUR PROJECT NAME}.iam.gserviceaccount.com'
+```
 
 ## FAQ
 
