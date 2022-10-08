@@ -63,13 +63,13 @@ After logging in to your Google account, You have succeeded if the screen [You a
 Let's create a service account by referring to https://cloud.google.com/iam/docs/creating-managing-service-accounts.
 
 Confirm the GCP project you created and set the project. 
-Please replace the project name(trade-bot-123456) below with your own,
+Please replace the project name(trade-bot-364400) below with your own,
 ```bash
  $ gcloud projects list
 PROJECT_ID              NAME                  PROJECT_NUMBER
-trade-bot-123456        trade-bot             123456789012
+trade-bot-364400        trade-bot             406377578255
 
-$ gcloud config set project trade-bot-123456
+$ gcloud config set project trade-bot-364400
 Updated property [core/project].
 ```
 
@@ -86,14 +86,14 @@ Grant the `roles/owner` role (privilege) to the service account.
 This is a very strong permission, so please be very careful when handling the service account.
 
 ```bash
-gcloud projects add-iam-policy-binding trade-bot-123456 \
---member="serviceAccount:trade-bot@trade-bot-123456.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding trade-bot-364400 \
+--member="serviceAccount:trade-bot@trade-bot-364400.iam.gserviceaccount.com" \
 --role=roles/owner
 
-Updated IAM policy for project [trade-bot-123456].
+Updated IAM policy for project [trade-bot-364400].
 bindings:
 - members:
-  - serviceAccount:trade-bot@trade-bot-123456.iam.gserviceaccount.com
+  - serviceAccount:trade-bot@trade-bot-364400.iam.gserviceaccount.com
   - user:example@example.com
   role: roles/owner
 etag: XXXXXXXXXXXX
@@ -106,9 +106,9 @@ https://cloud.google.com/iam/docs/creating-managing-service-account-keys#iam-ser
 (Please replace the local file path, service account name, and project ID to your own)
 ```bash
 $ gcloud iam service-accounts keys create /Users/dakimura/Desktop/sa-trade-bot-private-key.json \
-    --iam-account=trade-bot@trade-bot-123456.iam.gserviceaccount.com
+    --iam-account=trade-bot@trade-bot-364400.iam.gserviceaccount.com
     
-created key [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] of type [json] as [/Users/dakimura/Desktop/sa-trade-bot-private-key.json] for [trade-bot@trade-bot-123456.iam.gserviceaccount.com]
+created key [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] of type [json] as [/Users/dakimura/Desktop/sa-trade-bot-private-key.json] for [trade-bot@trade-bot-364400.iam.gserviceaccount.com]
 ```
 DO NOT share the downloaded private key file with anyone.
 
@@ -119,7 +119,7 @@ DO NOT share the downloaded private key file with anyone.
 Also, you cannot download the private key file again. If you accidentally lose the file or share the file with someone,
 please immediately delete it by the following command:
 ```bash
-gcloud iam service-accounts keys delete /Users/dakimura/Desktop/sa-trade-bot-private-key.json --iam-account=trade-bot@trade-bot-123456.iam.gserviceaccount.com
+gcloud iam service-accounts keys delete /Users/dakimura/Desktop/sa-trade-bot-private-key.json --iam-account=trade-bot@trade-bot-364400.iam.gserviceaccount.com
 ```
 
 ## Sign up for Terraform Cloud
@@ -173,7 +173,7 @@ Please check on `Sensitive`, and save the variable. Otherwise, the service accou
 to other users who can see your workspace.
 
 
-In the same way, add Key="PROJECT_ID", Value=trade-bot-123456"
+In the same way, add Key="PROJECT_ID", Value=trade-bot-364400"
 (Replace the project ID with your own)
 ![](img/set_variable.png)
 
@@ -210,7 +210,7 @@ Let's SSH-login and run the bot.
 You can SSH-login to the instance by using the following command:
 (Replace the project name and instance name with your own.)
 ```bash
-$ gcloud compute --project "trade-bot-123456" ssh --zone "us-central1-c" "bot-instance"
+$ gcloud compute --project "trade-bot-364400" ssh --zone "us-central1-c" "bot-instance"
 
 Warning: Permanently added 'compute.1***5' (***) to the list of known hosts.
 Linux bot-instance ***-cloud-amd64 #1 SMP Debian 5.10.140-1 (2022-09-02) x86_64
