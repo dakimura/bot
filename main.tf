@@ -72,6 +72,21 @@ resource "google_service_account" "github-actions" {
   display_name = "A service account for GitHub Actions"
 }
 
+data "google_iam_policy" "editor" {
+  binding {
+    role = "roles/editor"
+
+    members = [
+      "serviceAccount:github-actions@trade-bot-364400.iam.gserviceaccount.com",
+    ]
+  }
+}
+
+resource "google_service_account_iam_policy" "admin-account-iam" {
+  service_account_id = google_service_account.github-actions.name
+  policy_data        = data.google_iam_policy.editor.policy_data
+}
+
 resource "google_project_service" "project" {
   project = "${var.PROJECT_ID}"
   service = "iamcredentials.googleapis.com"
