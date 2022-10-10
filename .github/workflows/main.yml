@@ -24,6 +24,8 @@ jobs:
           service_account: 'github-actions@trade-bot-364400.iam.gserviceaccount.com'
       - shell: bash
         run: gsutil --version
-#      - shell:
-#        run: gcloud compute scp requirements.txt bot-instance:/tmp
+      - shell: bash
+        run: gsutil --version
+      - shell: bash
+        run: gcloud compute scp requirements.txt bot-instance:/tmp
 
