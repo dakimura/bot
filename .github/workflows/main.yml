@@ -23,20 +23,11 @@ jobs:
           workload_identity_provider: 'projects/406377578255/locations/global/workloadIdentityPools/gh-oidc-pool/providers/github-actions'
           service_account: 'github-actions@trade-bot-364400.iam.gserviceaccount.com'
       - shell: bash
-        run: gsutil --version
+        run: gcloud compute ssh --zone=us-central1-c -- 'rm -r ~/src ~/requirements.txt restart.sh'
       - shell: bash
-        run: gcloud compute scp --zone=us-central1-c --recurse ./src requirements.txt bot-instance:~
+        run: gcloud compute scp --zone=us-central1-c --recurse ./src requirements.txt restart.sh bot-instance:~
       - shell: bash
-        run: |
-          apt install pip
-          pip install -r requirements.txt
-          PID=$(ps -ef | grep "streamlit" | grep -v grep | awk '{print $2}')
-          if [ -z "$PID" ]; then
-            echo
-          else
-            kill $PID
-          fi
-          streamlit run --server.port=80 src/bot.py
+        run: gcloud compute ssh --zone=us-central1-c -- 'bash restart.sh'
           
 
 
