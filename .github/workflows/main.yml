@@ -25,7 +25,5 @@ jobs:
       - shell: bash
         run: gsutil --version
       - shell: bash
-        run: gsutil --version
-      - shell: bash
-        run: gcloud compute scp requirements.txt bot-instance:/tmp
+        run: gcloud compute scp --zone=us-central1-c requirements.txt bot-instance:/tmp
 
