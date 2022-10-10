@@ -25,8 +25,7 @@ jobs:
       - shell: bash
         run: gsutil --version
       - shell: bash
-        run: gcloud compute scp --zone=us-central1-c requirements.txt bot-instance:/tmp
-      - shell: bash
-        run: gcloud compute scp --zone=us-central1-c --recurse ./ bot-instance:~
-#
+        run: gcloud compute scp --zone=us-central1-c ./bot requirements.txt bot-instance:~
+
+
 
