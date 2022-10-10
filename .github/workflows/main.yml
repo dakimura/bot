@@ -22,8 +22,10 @@ jobs:
           token_format: access_token
           workload_identity_provider: 'projects/406377578255/locations/global/workloadIdentityPools/gh-oidc-pool/providers/github-actions'
           service_account: 'github-actions@trade-bot-364400.iam.gserviceaccount.com'
+      # I know this is not the best way to deploy the application.
+      # Because the GCE instance is not
       - shell: bash
-        run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'rm -r ~/src ~/requirements.txt restart.sh'
+        run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'rm -rf ~/src ~/requirements.txt restart.sh'
       - shell: bash
         run: gcloud compute scp --zone=us-central1-c --recurse ./src requirements.txt restart.sh bot-instance:~
       - shell: bash
