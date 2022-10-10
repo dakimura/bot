@@ -22,8 +22,10 @@ jobs:
           token_format: access_token
           workload_identity_provider: 'projects/406377578255/locations/global/workloadIdentityPools/gh-oidc-pool/providers/github-actions'
           service_account: 'github-actions@trade-bot-364400.iam.gserviceaccount.com'
-      # I know this is not the best way to deploy the application.
-      # Because the GCE instance is not
+      # I know this is not the best way to continuously deploy the application to GCE...
+      # - It takes a time to restart the application after kill (there is some down time)
+      # - Deployment may fail depending on the state of pip
+      # But because the GCE instance is tiny and not enough spec to run Docker daemon, I chose this way for now.
       - shell: bash
         run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'rm -rf ~/src ~/requirements.txt restart.sh'
       - shell: bash
