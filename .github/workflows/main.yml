@@ -23,16 +23,12 @@ jobs:
           workload_identity_provider: 'projects/406377578255/locations/global/workloadIdentityPools/gh-oidc-pool/providers/github-actions'
           service_account: 'github-actions@trade-bot-364400.iam.gserviceaccount.com'
       # I know this is not the best way to continuously deploy the application to GCE...
-      # - It takes a time to restart the application after kill (there is some down time)
-      # - Deployment may fail depending on the state of pip
-      # But because the GCE instance is tiny and not enough spec to run Docker daemon, I chose this way for now.
+      # - It takes a time to restart the application after kill (downtime exists)
+      # - Deployment may fail depending on the state of the instance
+      # But I use this way for now because the GCE instance is tiny and not enough spec to run Docker daemon.
       - shell: bash
-        run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'rm -rf ~/src ~/requirements.txt restart.sh'
-      - shell: bash
-        run: gcloud compute scp --zone=us-central1-c --recurse ./src requirements.txt restart.sh bot-instance:~
-      - shell: bash
-        run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'bash restart.sh'
-          
-
-
+        run: |
+          gcloud compute ssh --zone=us-central1-c bot-instance --command 'rm -rf ~/src ~/requirements.txt restart.sh'
+          gcloud compute scp --zone=us-central1-c --recurse ./src requirements.txt restart.sh bot-instance:~
+          gcloud compute ssh --zone=us-central1-c bot-instance --command 'bash restart.sh'
 

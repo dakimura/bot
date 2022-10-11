@@ -230,7 +230,7 @@ For now, let's copy-paste the source files and requirements.txt, and directly ru
 ```bash
 $ pip install -r requirements.txt
 # run as a background process
-$ nohup streamlit run --server.port=80 bot.py >>bot.log 2>&1 &
+$ nohup streamlit run --server.port=80 dashboard.py >>bot.log 2>&1 &
 $ cat bot.log
 nohup: ignoring input
 
