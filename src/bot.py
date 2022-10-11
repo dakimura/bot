@@ -4,9 +4,15 @@ import datetime
 import schedule
 import streamlit as st
 import random
+from alpaca.data.historical import CryptoHistoricalDataClient
+from alpaca.data.requests import CryptoBarsRequest
+from alpaca.data.timeframe import TimeFrame
 
 TRADE_DATA = []
 
+APCA_API_BASE_URL="https://paper-api.alpaca.markets"
+API_KEY_ID="***"
+API_SECRET_KEY="***"
 
 async def main():
     # entry exit job
@@ -24,7 +30,7 @@ async def main():
     schedule.every(15).seconds.do(exit_job)
 
     # ui
-    st.markdown("# Trade (test)")
+    st.markdown("# Trade (deploy test)")
     element1 = st.empty()
 
     # data update
@@ -35,3 +41,14 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    # client = CryptoHistoricalDataClient()
+    #
+    # request_params = CryptoBarsRequest(
+    #     symbol_or_symbols="BTC/USD",
+    #     timeframe=TimeFrame.Day,
+    #     start=datetime.datetime(year=2022, month=9, day=1)
+    # )
+    #
+    # bars = client.get_crypto_bars(request_params)
+    # print(bars)
+

@@ -1,2 +1,7 @@
 schedule==1.1.0
 streamlit==1.13.0
+alpaca-py==0.6.0
+pandas~=1.5.0
+TA-Lib==0.4.25
+pandas-ta==0.3.14-beta.0
+tuneta==0.1.43
