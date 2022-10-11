@@ -250,20 +250,25 @@ at the end of the log. Let's access the URL.
 Congrats!
 Now you are running your bot, and you can see the dashboard via the Internet.
 
-## Continuous Delivery and Integration using Github Actions
+## Continuous Delivery using Github Actions
+It's time-consuming to ssh-login and pull the latest code and restart the application.
+Let's automate it using [Github Actions](https://github.co.jp/features/actions).
+
 Go to Terraform Cloud -> Workspace -> Set Terraform Variable:
 Key=REPO_NAME, Value=dakimura/bot (replace with your own repo name)
 
 Go to the [dashboard of your GCP project](https://console.cloud.google.com/home/dashboard) and check the project name and number.
 ![](img/gcp_dashboard.png)
-Copy `.github/` directory to your repository, open `main.yml`, and change the following lines to your project name and number.
-
--> commit and push the change.
+Copy `.github/` directory of this repository to yours, open `main.yml`(=terraform script), and change the following lines to your project name and number.
 
 ```bash
 workload_identity_provider: 'projects/{YOUR PROJECT ID}/locations/global/workloadIdentityPools/gh-oidc-pool/providers/github-actions'
 service_account: 'github-actions@{YOUR PROJECT NUMBE}.iam.gserviceaccount.com'
 ```
+
+-> commit and push the change.
+Workload Identity will be configured for the github-actions service account for your GCP project.
+For now, you don't have to understand what Workload Identity and Service Account are, please think it as a permission to let Github Actions to edit your GCP resources.
 
 ## FAQ
 
@@ -312,14 +317,15 @@ on darwin_arm64
 ```
 
 
-
 ### Don't we use Docker?
 Actually, we should use Docker.
 But it's time-consuming to register the docker image to Google Container Registry and 
 configure the permission to pull the image from the GCE instance, so we think it as a nice-to-have but not must-have thing.
 
 Also, because we are using a tiny([e2-micro](https://cloud.google.com/compute/vm-instance-pricing?hl=ja#e2_sharedcore_machine_types)) instance,
-so we should not use much resource to the Docker daemon.
+so we cannot use much resource to the Docker daemon.
+
+But, again, we should use Docker ideally.
 
 ### Don't we register the bot as a systemctl service?
 For simplicity, we didn't explain how to do it.
