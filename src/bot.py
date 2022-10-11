@@ -24,7 +24,7 @@ async def main():
     schedule.every(15).seconds.do(exit_job)
 
     # ui
-    st.markdown("# Trade")
+    st.markdown("# Trade (test)")
     element1 = st.empty()
 
     # data update
