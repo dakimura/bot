@@ -27,8 +27,12 @@ jobs:
       # - Deployment may fail depending on the state of the instance
       # But I use this way for now because the GCE instance is tiny and not enough spec to run Docker daemon.
       - shell: bash
-        run: |
-          gcloud compute ssh --zone=us-central1-c bot-instance --command 'rm -rf ~/src ~/requirements.txt restart.sh'
-          gcloud compute scp --zone=us-central1-c --recurse ./src requirements.txt restart.sh bot-instance:~
-          gcloud compute ssh --zone=us-central1-c bot-instance --command 'bash restart.sh'
+        run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'rm -rf ~/src ~/requirements.txt restart.sh'
+      - shell: bash
+        run: gcloud compute scp --zone=us-central1-c --recurse ./src requirements.txt restart.sh bot-instance:~
+      - shell: bash
+        run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'bash restart.sh'
+
+
+
 
