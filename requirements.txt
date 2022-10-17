@@ -7,3 +7,6 @@ pandas-ta==0.3.14-beta.0
 tuneta==0.1.43
 matplotlib==3.6.1
 scikit-learn==1.1.2
+xgboost==1.6.2
+japanize_matplotlib==1.1.3
+numpy~=1.23.3
