@@ -1,27 +1,22 @@
-import os
 import logging
+import os
+import time
+from datetime import datetime, timedelta
 from logging import getLogger
-import asyncio
 from typing import Union, List
-import pickle
-import schedule
 
+import schedule
 from alpaca.common import RawData
-from alpaca.data import CryptoHistoricalDataClient, CryptoLatestQuoteRequest
+from alpaca.data import TimeFrame
+from alpaca.data.historical import CryptoHistoricalDataClient
+from alpaca.data.requests import CryptoBarsRequest
 from alpaca.trading import TradeAccount, Position
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import GetAssetsRequest
-from alpaca.trading.enums import AssetClass
-from alpaca.data.historical import CryptoHistoricalDataClient
-from alpaca.data.requests import CryptoLatestBarRequest, CryptoBarsRequest
-import time
-
-from xgboost import XGBRegressor
+from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import MarketOrderRequest
 
 logger = getLogger(__name__)
 
-# get the latest price data and predict every INTERVAL_SEC second
-interval_sec: int = int(os.environ.get('INTERVAL_SEC', '10'))
 # Alpaca API config
 alpaca_api_key_id: str = os.environ.get('ALPACA_API_KEY_ID')
 alpaca_api_secret_key: str = os.environ.get('ALPACA_API_SECRET_KEY')
@@ -32,47 +27,96 @@ alpaca_base_url: str = os.environ.get('ALPACA_BASE_URL',
 target_symbol: str = os.environ.get("TARGET_SYMBOL", "BTC/USD")
 model_pkl_path: str = os.environ.get("MODEL_FILEPATH",
                                      "./train/model/BTC_USD_model.pkl")
+# quantity of the target coin for one order
+trade_quantity: float = float(os.environ.get("TRADE_QUANTITY", "0.01"))
 
 
-class MainRoutine:
+class Main:
     def __init__(self, trading_cli: TradingClient,
                  data_cli: CryptoHistoricalDataClient,
-                 target_symbol: str,
-                 model: XGBRegressor):
+                 target_symbol: str):
         self.trading_cli: TradingClient = trading_cli
         self.data_cli: CryptoHistoricalDataClient = data_cli
         self.target_symbol: str = target_symbol
-        self.model: XGBRegressor = model
 
-    async def run(self):
+    def run(self):
         """
-        main routine
+        main logic.
+        Cryptocurrencies are traded on the assumption that
+        there is an inverse correlation between the upcoming price movement of
+        the and the price movement of 24 hours ago.
+        (ref: https://note.com/hht/n/nea09d366be7c )
         :return: None
         """
         account: Union[TradeAccount, RawData] = self.trading_cli.get_account()
-        logger.info("current cash: %s", account.cash)
+        logger.info("cash: %s", account.cash)
 
         positions: Union[
             List[Position], RawData] = self.trading_cli.get_all_positions()
-        logger.info("current positions: %s", positions)
+        logger.info("positions: %s", positions)
 
-        # get recent bars of a coin.
-        latest_bar = self.data_cli.get_crypto_bars(
-            CryptoBarsRequest(symbol_or_symbols=target_symbol)
+        # get 1H bars of 24h ago
+        now = datetime.utcnow()
+        logger.info("utc_now={}".format(now))
+        bar_24h_ago = self.data_cli.get_crypto_bars(
+            CryptoBarsRequest(
+                symbol_or_symbols=target_symbol,
+                timeframe=TimeFrame.Hour,
+                start=now + timedelta(hours=-24),
+                end=now + timedelta(hours=-23),
+            )
+        )[target_symbol][0]
+        logger.info("1H bar of 24hour ago: {}".format(bar_24h_ago))
+        if bar_24h_ago.open > bar_24h_ago.close:
+            try:
+                logger.info("buy because the price decreased 24h ago")
+                self.buy()
+            except Exception as e:
+                logger.info(e)
+        if bar_24h_ago.open < bar_24h_ago.close:
+            try:
+                logger.info("sell because the price increased 24h ago")
+                self.sell()
+            except Exception as e:
+                # sell fails if there is not enough position for the account, but just ignore it
+                logger.info(e)
+                pass
+
+    def buy(self):
+        """
+        buy at market if there is enough cash in the account
+        :return:
+        """
+        market_order_data = MarketOrderRequest(
+            symbol=target_symbol,
+            qty=trade_quantity,
+            side=OrderSide.BUY,
+            time_in_force=TimeInForce.GTC
         )
-        print(latest_bar)
 
+        market_order = self.trading_cli.submit_order(
+            order_data=market_order_data
+        )
+        logger.info("submitted a market order: {}".format(market_order))
 
-def load_value(load_from_path: str):
-    """
-    load a serialized object from the specified path
-    :param load_from_path:
-    :return:
-    """
-    f = open(load_from_path, "rb")
-    value = pickle.load(f)
-    f.close()
-    return value
+    def sell(self):
+        """
+        sell(=liquidate) at market if there are enough positions
+        :return:
+        """
+        # preparing orders
+        market_order_data = MarketOrderRequest(
+            symbol=target_symbol,
+            qty=trade_quantity,
+            side=OrderSide.SELL,
+            time_in_force=TimeInForce.GTC
+        )
+
+        # Market order
+        market_order = self.trading_cli.submit_order(
+            order_data=market_order_data
+        )
+        logger.info("submitted a market order: {}".format(market_order))
 
 
 def main():
@@ -80,28 +124,26 @@ def main():
     logging.basicConfig(
         format='[%(asctime)s - %(name)s - %(levelname)s] %(message)s',
         level=logging.INFO)
-    logger.info("start initializing...")
 
     trading_client = TradingClient(alpaca_api_key_id, alpaca_api_secret_key,
                                    paper=("paper" in alpaca_base_url),
                                    )
 
-    # keys required for stock historical data client
     data_client = CryptoHistoricalDataClient(
         api_key=alpaca_api_key_id,
         secret_key=alpaca_api_secret_key,
     )
-    # load serialized model
-    model:XGBRegressor = load_value(model_pkl_path)
 
-    main_routine = MainRoutine(trading_cli=trading_client, data_cli=data_client,
-                               target_symbol=target_symbol, model=model)
-    logger.info("initialization done. bot started...")
+    main = Main(trading_cli=trading_client, data_cli=data_client,
+                target_symbol=target_symbol)
+    logger.info("start: initialization done. Running the main routine...")
 
-    # main loop
+    schedule.every().hour.at(":00").do(main.run)
+
+    schedule.run_all()
     while True:
-        asyncio.run(main_routine.run())
-        time.sleep(interval_sec)
+        schedule.run_pending()
+        time.sleep(1)
 
 
 if __name__ == "__main__":

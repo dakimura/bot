@@ -2,12 +2,12 @@
 
 In order to operate an automated trading bot, it is necessary to prepare a mechanism that 
 allows the bot to automatically run without the operator having to start and stop it manually.
-This is a high hurdle for those who are not experts in infrastructure or networking. 
-Even if they know complex machine-learning algorithms, they may find it difficult to put them into actual operation.
+This is one of the high hurdles for those who want to build their own bot but are not experts in infrastructure or networking. 
+Even if they know effective machine-learning algorithms, they may find it difficult to put them into actual system operation.
 
-In this repository, We will explain how to build a simple environment for running a bot.
+In this repository, We explain how to build a simple environment for running a bot, for free.
 Even if you do not understand some network/infrastructure/cloud computing terms,
-we aim for you to be able to start bot operation by following the steps.
+we aim for you to be able to start bot operation without paying cost for the initial server by following the steps.
 
 Of course, we are aware that this is not enough to operate a full-fledged, production-scale service.
 Databases, log collection, a mechanism to send alerts when the server is down, CD/CI, and so on would be necessary.
@@ -18,18 +18,18 @@ However, we hope this procedure will be helpful for those who are taking their f
 ![](img/system_arch.png)
 https://docs.google.com/presentation/d/1SyGSNEX8N3V8m4CkujqgTyiVN-Eeu1zUN4UCOVIs5Ss/edit?usp=sharing
 
-## Create a Github repository for the bot
+## Create(Fork) a Github repository for the bot
 
 To store the code for the bot and network/infra configuration,
 a [Github](https://github.com/) repository is needed.
 I created dakimura/bot repository.
-You can start from forking the repo.
+You can start from forking this repo.
 If you don't want to make the repository public, 
-you can create an empty repository and copy-paste the contents of this repository.
+you can create an empty repository and copy-paste the contents of this repository to it.
 
 ## Sign up for Google Cloud Platform
 
-To run the bot for 24/7, you need a server on which to run (deploy) the bot program.
+To run the bot for 24/7, you need a server on which to run the bot program.
 Here we will use Google Cloud Platform (GCP). Of course, other rental servers or cloud services such as AWS and Azure are acceptable, 
 but As of October 2022, GCP has a free tier that allows you to keep running a small(e2-micro) instance for free for as long as you want,
 up to the maximum amount each month. Other services also offer free allowances, 
@@ -39,15 +39,17 @@ Sign up for Google Cloud Platform from [here](https://www.google.com/cloud)
 
 ### Create a project on Google Cloud Platform
 
-To create a server resource such as an Google Compute Engine instance, 
+To create a resource such as an Google Compute Engine instance, 
 you must first create a "project" on Google Cloud Platform.
 Open the Google Cloud console https://cloud.google.com' > cloud-console,
 sign in and Create a new project. I have created a project named `trade-bot`.
 
-### install gcloud (Google Cloud SDK command line interface)
+### Install gcloud (Google Cloud SDK command line interface)
 
+Please follow the steps:
 https://cloud.google.com/sdk/docs/install
-Make sure the `gcloud` command is available from the terminal.
+
+Make sure the `gcloud` command is available from Terminal.
 
 ### Sign in Google Cloud and create a service account
 A service account is a special type of Google account intended to represent 
@@ -58,7 +60,8 @@ To automatically build a server using Terraform on your Google Cloud Platform ac
  you need to pass the service account information to Terraform.
 
 Let's use the `gcloud auth login` command to first make sure that the gcloud command is properly installed.
-After logging in to your Google account, You have succeeded if the screen [You are now authenticated with the gcloud CLI!](https://cloud.google.com/sdk/auth_success) appears in your browser.
+You have succeeded if the screen [You are now authenticated with the gcloud CLI!](https://cloud.google.com/sdk/auth_success) 
+appears in your browser after logging in to your Google account.
 
 Let's create a service account by referring to https://cloud.google.com/iam/docs/creating-managing-service-accounts.
 
@@ -73,7 +76,7 @@ $ gcloud config set project trade-bot-364400
 Updated property [core/project].
 ```
 
-and create a service account.
+and create a service account by the following command.
 ```bash
 $ gcloud iam service-accounts create trade-bot \
 --description="ServiceAccount for my trading bot" \
@@ -82,11 +85,12 @@ $ gcloud iam service-accounts create trade-bot \
 Created service account [trade-bot].
 ```
 
-Grant the `roles/owner` role (privilege) to the service account.
-This is a very strong permission, so please be very careful when handling the service account.
+Grant the `roles/owner` role (privilege) to the service account by the following command.
+This is a very strong privilege, please be very careful when handling the service account.
+Please replace the project name(trade-bot-364400) below with your own,
 
 ```bash
-gcloud projects add-iam-policy-binding trade-bot-364400 \
+$ gcloud projects add-iam-policy-binding trade-bot-364400 \
 --member="serviceAccount:trade-bot@trade-bot-364400.iam.gserviceaccount.com" \
 --role=roles/owner
 
@@ -112,14 +116,10 @@ created key [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] of type [json] as [/Users
 ```
 DO NOT share the downloaded private key file with anyone.
 
-Once again, because it's important.
-
-DO NOT share the downloaded private key file with anyone.
-
 Also, you cannot download the private key file again. If you accidentally lose the file or share the file with someone,
-please immediately delete it by the following command:
+please immediately delete it by the following command, and create another one:
 ```bash
-gcloud iam service-accounts keys delete /Users/dakimura/Desktop/sa-trade-bot-private-key.json --iam-account=trade-bot@trade-bot-364400.iam.gserviceaccount.com
+$gcloud iam service-accounts keys delete /Users/dakimura/Desktop/sa-trade-bot-private-key.json --iam-account=trade-bot@trade-bot-364400.iam.gserviceaccount.com
 ```
 
 ## Sign up for Terraform Cloud
@@ -128,9 +128,12 @@ Please register an account with [Terraform Cloud](https://app.terraform.io/publi
 and confirm your e-mail address after the registration.
 
 ### Create a workspace in Terraform Cloud
-Create a workspace by following the steps at: https://www.terraform.io/cloud-docs/workspaces/creating#create-a-workspace.
-[Login to Terraform Cloud](https://app.terraform.io/app).
-When your infrastructure config is changed, it should be automatically applied to the infrastructure.
+Create a workspace by following the steps:
+
+https://www.terraform.io/cloud-docs/workspaces/creating#create-a-workspace.
+
+Please [Login to Terraform Cloud](https://app.terraform.io/app).
+When your infrastructure config is updated, it should be automatically applied to the infrastructure.
 Terraform cloud can update the infrastructure when your code on GitHub is updated.
 Let's integrate Github when creating a new workspace.
 
@@ -162,8 +165,9 @@ Go to the workspace you created.
 Click "Varibale" from the left pane, Choose "Add Variable", and check "Environmental Variable".
 
 ![](img/reg_env_var_tf_cloud.png)
-Key="GOOGLE_CREDENTIALS", Value=the content of the service account file you created.
-Environmental Variable does not accept new lines, so remove the value by the following command and copy-paste.
+Set Key="GOOGLE_CREDENTIALS", Value=the content of the service account file you created.
+
+Environmental Variable does not accept new lines, so please remove the value by the following command before entering.
 (If)
 ```bash
 $ brew install jq
@@ -173,14 +177,17 @@ Please check on `Sensitive`, and save the variable. Otherwise, the service accou
 to other users who can see your workspace.
 
 
-In the same way, add Key="PROJECT_ID", Value=trade-bot-364400"
+In the same way, add 
+
+Key="PROJECT_ID", Value=trade-bot-364400"
+
 (Replace the project ID with your own)
 ![](img/set_variable.png)
 
 Click "Save Variable".
 
 ![](img/variables.png)
-Now you should have 2 environmental variables.
+Now you have 2 environmental variables.
 
 ### Run Terraform (apply)
 Go to your workspace page -> Click "Runs" -> Click "Actions" -> "Start new run"
@@ -190,8 +197,9 @@ After Planning and Cost Estimation is done, click "Confirm & Apply"
 
 Please follow the error message if you get the following:
 ![](img/apply_error.png)
-Go to the API dashboard for your project and search the APIs that are not enabled -> enable API
-https://console.cloud.google.com/apis/dashboard
+Go to the [API dashboard](https://console.cloud.google.com/apis/dashboard) 
+for your project and search the APIs that are not enabled -> enable API
+
 
 Once the Run is succeeded, you will see the following:
 ![](img/run_succeeded.png)
@@ -203,7 +211,48 @@ Go to Workspace page on Terraform Cloud -> Setting -> General
 ![](img/apply_method.png)
 Click "Save settings".
 
-## run the bot application
+## Setup Github Actions (CD/CI)
+It is time-consuming to deploy the application every time you update it.
+By integrating [Github Actions](https://docs.github.com/en/actions) with your repository,
+you can automatically deploy the application by just pushing the code to the main branch.
+In this section, we set it up using the [workflow file](./github/workflows/main.yml)
+
+### Get Alpaca Key ID and API Secret
+In the bot application, Alpaca platform is used to get data and trade by default.
+Before deploying the application to your server,
+let's [sign up Alpaca for free from here](https://alpaca.markets/).
+
+Alpaca has [Paper Trading mode](https://alpaca.markets/docs/trading/paper-trading/).
+Let's start the bot with the simulation mode.
+After sign in to Alpaca, You can see your API Keys on the [paper trade dashboard](https://app.alpaca.markets/paper/dashboard/overview)
+
+![](img/paper_trade_api_keys.png)
+
+Please create your API key/secret for the paper trades.
+
+### Set API key/secret as your github repository secrets
+To ask Github Actions to deploy your apps, we need to pass the Alpaca API Key/Secret
+to Github.
+Please go to your Github Repository -> Settings -> Secrets -> Actions
+
+![](../../../../../Desktop/actions_secret.png)
+
+Create `ALPACA_API_KEY_ID` and `ALPACA_API_SECRET_KEY` secrets on your repository.
+
+### Modify the workflow file
+Github automatically reads `./github/workflows/main.yml` and triggers the workflow.
+Open the file and change the GCP project name with your own on the following line
+```
+          service_account: 'github-actions@trade-bot-364400.iam.gserviceaccount.com'
+```
+
+Then, push the change to the remote.
+Github automatically 
+
+## Run the bot application
+
+### SSH and run
+
 Now you have a server instance.
 Let's SSH-login and run the bot.
 
@@ -225,13 +274,15 @@ dakimura@bot-instance:~$ sudo -s
 root@bot-instance:/home/dakimura#
 root@bot-instance:/home/dakimura# apt install pip
 ```
-For now, let's copy-paste the source files and requirements.txt, and directly run the bot.
+For now, let's copy-paste the source files and requirements.txt, 
+
+and directly run the bot.
 
 ```bash
 $ pip install -r requirements.txt
 # run as a background process
-$ nohup streamlit run --server.port=80 dashboard.py >>bot.log 2>&1 &
-$ cat bot.log
+$ nohup streamlit run --server.port=80 dashboard.py >>dashboard.log 2>&1 &
+$ cat dashboard.log
 nohup: ignoring input
 
 Collecting usage statistics. To deactivate, set browser.gatherUsageStats to False.

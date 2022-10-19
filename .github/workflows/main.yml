@@ -5,8 +5,12 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  ALPACA_API_KEY_ID: ${{secrets.ALPACA_API_KEY_ID}}
+  ALPACA_API_SECRET_KEY: ${{secrets.ALPACA_API_SECRET_KEY}}
+
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-20.04
     permissions:
       contents: 'read'
@@ -23,7 +27,7 @@ jobs:
           workload_identity_provider: 'projects/406377578255/locations/global/workloadIdentityPools/gh-oidc-pool/providers/github-actions'
           service_account: 'github-actions@trade-bot-364400.iam.gserviceaccount.com'
       # I know this is not the best way to continuously deploy the application to GCE...
-      # - It takes a time to restart the application after kill (downtime exists)
+      # - It takes time to restart the application after kill (downtime exists)
       # - Deployment may fail depending on the state of the instance
       # But I use this way for now because the GCE instance is tiny and not enough spec to run Docker daemon.
       - shell: bash

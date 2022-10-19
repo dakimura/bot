@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import logging
 import random
 
 import schedule
@@ -38,4 +39,8 @@ async def main():
 
 
 if __name__ == "__main__":
+    # init logger
+    logging.basicConfig(
+        format='[%(asctime)s - %(name)s - %(levelname)s] %(message)s',
+        level=logging.INFO)
     asyncio.run(main())
