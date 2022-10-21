@@ -247,7 +247,7 @@ Open the file and change the GCP project name with your own on the following lin
 ```
 
 Then, push the change to the remote.
-Github automatically 
+Github automatically つぎここから
 
 ## Run the bot application
 

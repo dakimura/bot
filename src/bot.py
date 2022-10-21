@@ -1,19 +1,22 @@
+import json
 import logging
 import os
 import time
 from datetime import datetime, timedelta
+from enum import Enum
 from logging import getLogger
-from typing import Union, List
+from typing import Union, List, Optional
 
 import schedule
+from alpaca.broker import Order
 from alpaca.common import RawData
 from alpaca.data import TimeFrame
 from alpaca.data.historical import CryptoHistoricalDataClient
 from alpaca.data.requests import CryptoBarsRequest
-from alpaca.trading import TradeAccount, Position
+from alpaca.trading import TradeAccount
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.requests import MarketOrderRequest
+from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest
 
 logger = getLogger(__name__)
 
@@ -31,30 +34,52 @@ model_pkl_path: str = os.environ.get("MODEL_FILEPATH",
 trade_quantity: float = float(os.environ.get("TRADE_QUANTITY", "0.01"))
 
 
+class Signal(Enum):
+    BUY = 1
+    SELL = 2
+
+
 class Main:
     def __init__(self, trading_cli: TradingClient,
                  data_cli: CryptoHistoricalDataClient,
-                 target_symbol: str):
+                 target_symbol: str,
+                 status_filepath: str,
+                 ):
         self.trading_cli: TradingClient = trading_cli
         self.data_cli: CryptoHistoricalDataClient = data_cli
         self.target_symbol: str = target_symbol
+        self.status_filepath: str = status_filepath
 
-    def run(self):
+    def log_status(self):
+        account: Union[
+            TradeAccount, RawData] = self.trading_cli.get_account()
+        logger.info("equity: %s", account.equity)
+
+        orders: Union[List[Order], RawData] = self.trading_cli. \
+            get_orders(filter=GetOrdersRequest(status="all", limit=10))
+        logger.info("order_history: %s", orders)
+
+        status = {"equity": account.equity, "order_history": []}
+        for order in orders:
+            status["order_history"].append(
+                {"symbol": order.symbol, "type": order.order_type,
+                 "side": order.side, "qty": order.qty,
+                 "created_at": order.created_at.isoformat(),
+                 })
+
+        # save as a json
+        json_file = open(self.status_filepath, mode="w")
+        json.dump(status, json_file)
+        json_file.close()
+
+    def signal(self) -> Optional[Signal]:
         """
-        main logic.
-        Cryptocurrencies are traded on the assumption that
-        there is an inverse correlation between the upcoming price movement of
-        the and the price movement of 24 hours ago.
+        Assume that
+        there is an inverse correlation between the upcoming price movement
+        and the price movement of 24 hours ago.
         (ref: https://note.com/hht/n/nea09d366be7c )
-        :return: None
+        :return: Signal
         """
-        account: Union[TradeAccount, RawData] = self.trading_cli.get_account()
-        logger.info("cash: %s", account.cash)
-
-        positions: Union[
-            List[Position], RawData] = self.trading_cli.get_all_positions()
-        logger.info("positions: %s", positions)
-
         # get 1H bars of 24h ago
         now = datetime.utcnow()
         logger.info("utc_now={}".format(now))
@@ -68,19 +93,35 @@ class Main:
         )[target_symbol][0]
         logger.info("1H bar of 24hour ago: {}".format(bar_24h_ago))
         if bar_24h_ago.open > bar_24h_ago.close:
-            try:
-                logger.info("buy because the price decreased 24h ago")
-                self.buy()
-            except Exception as e:
-                logger.info(e)
+            logger.info(
+                "buy because the price decreased 24h ago"
+                "(open: {}, close:{})".format(
+                    bar_24h_ago.open, bar_24h_ago.close))
+            return Signal.BUY
+
         if bar_24h_ago.open < bar_24h_ago.close:
-            try:
-                logger.info("sell because the price increased 24h ago")
+            logger.info(
+                "sell because the price increased 24h ago"
+                "(open: {}, close:{})".format(
+                    bar_24h_ago.open, bar_24h_ago.close))
+            return Signal.SELL
+
+    def run(self):
+        """
+        main logic.
+
+        :return: None
+        """
+        self.log_status()
+
+        signal = self.signal()
+        try:
+            if signal == Signal.BUY:
+                self.buy()
+            elif signal == Signal.SELL:
                 self.sell()
-            except Exception as e:
-                # sell fails if there is not enough position for the account, but just ignore it
-                logger.info(e)
-                pass
+        except Exception as e:
+            logger.info(e)
 
     def buy(self):
         """
@@ -101,7 +142,7 @@ class Main:
 
     def sell(self):
         """
-        sell(=liquidate) at market if there are enough positions
+        sell at market if there are enough positions
         :return:
         """
         # preparing orders
@@ -135,7 +176,9 @@ def main():
     )
 
     main = Main(trading_cli=trading_client, data_cli=data_client,
-                target_symbol=target_symbol)
+                target_symbol=target_symbol,
+                status_filepath="./status.json",
+                )
     logger.info("start: initialization done. Running the main routine...")
 
     schedule.every().hour.at(":00").do(main.run)
@@ -143,7 +186,7 @@ def main():
     schedule.run_all()
     while True:
         schedule.run_pending()
-        time.sleep(1)
+        time.sleep(30)
 
 
 if __name__ == "__main__":
