@@ -5,19 +5,21 @@ from typing import Dict
 
 import streamlit as st
 
+from model import Status
+
 logger = logging.getLogger(__name__)
 
 
 async def main():
     @st.cache(ttl=30)  # sec
-    def load_data(filepath: str) -> Dict:
+    def load_data(filepath: str) -> Status:
         try:
             with open(filepath, "r") as f:
                 data = f.readline()
                 return json.loads(data)
         except FileNotFoundError as e:
             logger.error("status json file not found", e)
-            return {"equity":0, "order_history":[]}
+            return {"equity": "0", "buying_power": "0", "order_history": []}
 
     # entry exit job
     def entry_job():
@@ -35,7 +37,7 @@ async def main():
 
     col1, col2 = st.columns(2)
     col1.metric("Equity", status["equity"], "+0")
-    col2.metric("Buying Power", "$199997.28", "+$0.89")
+    col2.metric("Buying Power", status["buying_power"], "+0")
 
     st.markdown("# Order History")
     st.table(status["order_history"])

@@ -18,6 +18,8 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest
 
+from model import Status
+
 logger = getLogger(__name__)
 
 # Alpaca API config
@@ -59,7 +61,9 @@ class Main:
             get_orders(filter=GetOrdersRequest(status="all", limit=10))
         logger.info("order_history: %s", orders)
 
-        status = {"equity": account.equity, "order_history": []}
+        status: Status = {"equity": account.equity,
+                          "buying_power": account.buying_power,
+                          "order_history": []}
         for order in orders:
             status["order_history"].append(
                 {"symbol": order.symbol, "type": order.order_type,
