@@ -35,7 +35,7 @@ jobs:
       - shell: bash
         run: gcloud compute scp --zone=us-central1-c --recurse ./src requirements.txt restart.sh bot-instance:~
       - shell: bash
-        run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'bash restart.sh'
+        run: gcloud compute ssh --zone=us-central1-c bot-instance --command 'bash restart.sh $ALPACA_API_KEY_ID $sALPACA_API_SECRET_KEY'
 
 
 
